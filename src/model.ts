@@ -183,7 +183,7 @@ export type RecordDetail = {
 }
 export type ChatMessage = {
     id: string
-    sender: Member
+   
 }
 export type GARecord = {
     action: string

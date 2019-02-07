@@ -7,8 +7,8 @@ import * as reviewMessageService from "./services/reviewMessageService"
 import * as eventService from "./services/eventService"
 
 import { User, ReviewMessage, Receiver, EventResult } from "./model"
-import { pubsubConfig, MODE } from './config'
-const queue = new Queue("system" + MODE, { redis: { port: 6379, host: '127.0.0.1', password: 'systemv2' } })
+import { pubsubConfig, MODE, redisConfig } from './config'
+const queue = new Queue(redisConfig.name, { redis: redisConfig })
 const pubsub = PubSub({ keyFilename: pubsubConfig.serviceAccountPath })
 const router = Router()
 router.post("/createReviewMessage", async (req, res) => {
@@ -176,20 +176,25 @@ router.post("/agree/:reviewMessageId", async (req, res) => {
                     memberCheckExecu.push(eventService.createEventReceiver(newEvent.id, receiver))
                 await Promise.all(memberCheckExecu)
 
-
                 const data = Buffer.from(JSON.stringify({
                     id: newEvent.id,
                     timeStamp: newEvent.timeStamp
                 }))
-                await pubsub.topic(pubsubConfig.topicName).publisher().publish(data)
+                console.log("pub data", {
+                    id: newEvent.id,
+                    timeStamp: newEvent.timeStamp
+                })
+                await pubsub.topic(pubsubConfig.topicName + pubsubConfig.messageTopicName).publisher().publish(data)
                 newReviewMessage.state = 2
                 await reviewMessageService.setReviewMessage(newReviewMessage)
             }
             res.status(200).send(cron)
         }).catch(err => {
+            console.log("sending failed", err)
             res.sendStatus(403)
         })
     } else {
+        console.log("review message not found")
         res.sendStatus(403)
     }
 })

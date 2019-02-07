@@ -80,8 +80,7 @@ const dialogflowFulfillmentText = async (userId, dialogflowResult): Promise<any>
         await memberService.setMember(memberUpdateData)
 
         let userMessage: ChatMessage = {
-            id: userId,
-            sender: memberSnapShot.docs[0].data() as Member
+            id: userId        
         }
 
         await chatMessageService.setChatMessage(userMessage)

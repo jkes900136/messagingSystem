@@ -6,12 +6,13 @@ import * as admin from 'firebase-admin';
 
 import { databaseURLPath, serviceAccountPath, storageBucket, prefix, PORT } from './config'
 
-var serviceAccount = require(serviceAccountPath);
+let serviceAccount = require(serviceAccountPath);
 admin.initializeApp({
   credential: admin.credential.cert(serviceAccount),
   databaseURL: databaseURLPath,
   storageBucket: storageBucket
 });
+import { path, permit, authentication } from "./securityConfig"
 const settings = { timestampsInSnapshots: true };
 admin.firestore().settings(settings);
 const app = Express()
@@ -23,8 +24,9 @@ app.use(Express.json({ limit: '100mb' }));
 import webhook from './chatbotWS'
 import bindingWS from './bindingWS'
 import DriveCrawler from './driveCrawler'
+import systemPerformance from './systemPerformance'
 import authWS from "./authWS"
-
+import memberParentsWS from "./memberParentsWS"
 import healthReportWS from "./healthReport"
 import DBsync from './DBsync'
 import WorkWS from './workWS'
@@ -37,14 +39,16 @@ import fileWS from './fileWS'
 import TemplateWS from "./templateWS"
 import PubSubEvent from "./pubSubEvent"
 import ReviewMessageWS from "./reviewMessageWS"
+app.use(authentication)
 app.get(prefix + "/", (req, res) => {
   res.sendStatus(200)
 })
 app.use(prefix + "/", webhook);
 app.use(prefix + "/", bindingWS);
 app.use(prefix + "/", DriveCrawler);
+app.use(prefix + "/", systemPerformance)
 app.use(prefix + "/", authWS);
-
+app.use(prefix + "/", memberParentsWS);
 app.use(prefix + "/", healthReportWS)
 app.use(prefix + "/", DBsync)
 app.use(prefix + "/", WorkWS)

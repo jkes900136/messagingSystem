@@ -2,10 +2,11 @@ import * as Queue from "bull"
 import * as cluster from "cluster"
 import * as admin from "firebase-admin"
 import * as PubSub from "@google-cloud/pubsub"
-import { databaseURLPath, pubsubConfig, serviceAccountPath, storageBucket, prefix, idLength, MODE } from './config'
+import { databaseURLPath, pubsubConfig, serviceAccountPath, storageBucket, redisConfig, MODE } from './config'
 import { ScheduleEvent, EventResult } from "./model"
+let serviceAccount = require(serviceAccountPath);
 admin.initializeApp({
-    credential: admin.credential.cert(serviceAccountPath),
+    credential: admin.credential.cert(serviceAccount),
     databaseURL: databaseURLPath,
     storageBucket: storageBucket
 })
@@ -14,7 +15,7 @@ admin.firestore().settings(settings)
 import * as reviewMessageService from "./services/reviewMessageService"
 import * as eventService from "./services/eventService"
 import uuid = require("uuid");
-const q = new Queue("system" + MODE, { redis: { port: 6379, host: '127.0.0.1', password: 'systemv2' } })
+const q = new Queue(redisConfig.name, { redis: redisConfig })
 const numWorkers = 10
 
 const pubsub = PubSub({ keyFilename: pubsubConfig.serviceAccountPath })
@@ -38,7 +39,7 @@ if (cluster.isMaster) {
         console.log(`bull server error: ${error.message} !`)
     })
     q.on("failed", (error) => {
-        console.log(`bull server fail !`)
+        console.log(`bull server fail !`,error)
     })
 
     q.process(async (job) => {
@@ -69,7 +70,11 @@ if (cluster.isMaster) {
                 id: newEvent.id,
                 timeStamp: newEvent.timeStamp
             }))
-            await pubsub.topic(pubsubConfig.topicName).publisher().publish(data)
+            console.log("pub data", {
+                id: newEvent.id,
+                timeStamp: newEvent.timeStamp
+            })
+            await pubsub.topic(pubsubConfig.topicName + pubsubConfig.messageTopicName).publisher().publish(data)
             reviewMessageInfo.state = 2
             await reviewMessageService.setReviewMessage(reviewMessageInfo)
         }

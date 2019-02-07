@@ -1,11 +1,11 @@
 import { Router } from "express"
 import * as messageRecordService from "./services/messageRecordService"
-
+import * as memberService from "./services/memberService"
 import { pushMessage as pushLineMessage, toPersonMessage, toLineTextMessage } from "./services/lineService"
 import { pushTemplateMessages as pushWechatMessages, pushCustomMessage, toTemplateMessagesMQ, toCustomTextMessage } from "./services/wechatService"
 import { pushMessage as pushSMSMessage, toSMSMessage } from "./services/smsService"
 import { pushMessage as pushEmailMessage, getEmailFiles, toEmailMessage } from "./services/emailService"
-import { Channel, Member, File, MessageRecord, RecordDetail, ChatMessage, Event, MemberOrganization, MessageTemplate } from "./model"
+import { Receiver, Member,  RecordDetail, ChatMessage,  MessageTemplate } from "./model"
 import * as  chatMessageService from './services/chatMessageService'
 
 import { backendUrl, idLength } from "./config"
@@ -14,17 +14,17 @@ import { resolve } from "path";
 const router = Router()
 router.post("/pushMessage", async (req, res, next) => {
     const sender: Member = req.body.sender
-    
-    const receivers: Member[] = req.body.receivers
+
+    const receivers: Receiver[] = req.body.receivers
     const messageTemplate: MessageTemplate = req.body.messageObj
 
     let content: string = ""
-   
+
     let storageUrls: MessageTemplate["urls"] = []
     let thumb: string = ""
     if (req.body.hasOwnProperty("messageObj")) {
         content = req.body.messageObj.content
-       
+
         if (req.body.messageObj.hasOwnProperty("urls")) {
             storageUrls = req.body.messageObj.urls
         }
@@ -45,115 +45,117 @@ router.post("/pushMessage", async (req, res, next) => {
 
 
     for (const receiver of receivers) {
-        let formatedContent = content
-        if (receiver.hasOwnProperty("data")) {
-            if (receiver.data instanceof Array) {
-                for (let datum of receiver.data) {
-                    if (receiver.hasOwnProperty("name")) {
-                        datum['name'] = receiver.name
+        memberService.getMemberById(receiver.id).then(async member => {
+            let formatedContent = content
+            if (receiver.hasOwnProperty("data")) {
+                if (receiver.data instanceof Array) {
+                    for (let datum of receiver.data) {
+                        if (receiver.hasOwnProperty("name")) {
+                            datum['name'] = member.name
+                        }
+                        formatedContent = formatContentByMQ(content, datum)
                     }
-                    formatedContent = formatContentByMQ(content, datum)
+                } else {
+                    // if (receiver.hasOwnProperty("name")) {
+                    //     receiver.data['name'] = member.name
+                    // }
+                    // formatedContent = formatContentByMQ(content, receiver.data)
                 }
+            }
+            if (req.body.hasOwnProperty("item")) {
+                formatedContent = formatItemContentByMQ(formatedContent, req.body.item.data)
+                formatedContent = formatedContent.replace(/{{item}}/g, req.body.item.name || "")
             } else {
-                if (receiver.hasOwnProperty("name")) {
-                    receiver.data['name'] = receiver.name
-                }
-                formatedContent = formatContentByMQ(content, receiver.data)
-            }
-        }
-        if (req.body.hasOwnProperty("item")) {
-            formatedContent = formatItemContentByMQ(formatedContent, req.body.item.data)
-            formatedContent = formatedContent.replace(/{{item}}/g, req.body.item.name || "")
-        } else {
-            
-        }
-             
-        if (messageTemplate.channel == "WeChat") {
-            if (receiver.wechatId && receiver.wechatId !== "") {
-                // const trackId = messageRecordService.getRecordDetailUUID(messageRecord.id)
-                const wechatMessages = toTemplateMessagesMQ(sender, receiver.wechatId, formatedContent, storageUrls, thumb)
-                if (wechatMessages) {
-                    messageRecord.sendCount += 1
-                    pushMessagePromises.push(
-                        pushWechatMessages(wechatMessages)
-                            .then(() => {
-                                messageRecord.successCount += 1
-                                return createChatMessage(sender, receiver, messageTemplate.channel, formatedContent, storageUrls, thumb)
 
-                            })
-                            .catch(() => {
-                                return resolve()
-                            })
-                    )
-                }
             }
-        }
 
-        if (messageTemplate.channel == "Line") {
-            if (receiver.hasOwnProperty("groupId")) {
-                receiver['lineId'] = receiver.groupId
-            }
-            if (receiver.lineId && receiver.lineId !== "") {
-                // if (receiver.lineId.substring(0, 1) == "U") {
-                // const trackId = messageRecordService.getRecordDetailUUID(messageRecord.id)
-                const lineMessage = toPersonMessage(sender, formatedContent, storageUrls, thumb, messageTemplate.type)
-                if (lineMessage) {
-                    messageRecord.sendCount += 1
-                    // console.log("lineMessage:", JSON.stringify(lineMessage, null, 4))
-                    pushMessagePromises.push(
-                        pushLineMessage(receiver.lineId, lineMessage)
-                            .then(() => {
-                                messageRecord.successCount += 1
-                                return createChatMessage(sender, receiver, messageTemplate.channel, formatedContent, storageUrls, thumb)
-                            })
-                            .catch(() => {
-                                return resolve()
-                            })
-                    )
+            if (messageTemplate.channel == "WeChat") {
+                if (member.wechatId && member.wechatId !== "") {
+                    // const trackId = messageRecordService.getRecordDetailUUID(messageRecord.id)
+                    const wechatMessages = toTemplateMessagesMQ(sender, member.wechatId, formatedContent, storageUrls, thumb)
+                    if (wechatMessages) {
+                        messageRecord.sendCount += 1
+                        pushMessagePromises.push(
+                            pushWechatMessages(wechatMessages)
+                                .then(() => {
+                                    messageRecord.successCount += 1
+                                    return createChatMessage(sender, member, messageTemplate.channel, formatedContent, storageUrls, thumb)
+
+                                })
+                                .catch(() => {
+                                    return resolve()
+                                })
+                        )
+                    }
                 }
+            }
+
+            if (messageTemplate.channel == "Line") {
+                // if (receiver.hasOwnProperty("groupId")) {
+                //     member['lineId'] = receiver.groupId
                 // }
+                if (member.lineId && member.lineId !== "") {
+                    // if (receiver.lineId.substring(0, 1) == "U") {
+                    // const trackId = messageRecordService.getRecordDetailUUID(messageRecord.id)
+                    const lineMessage = toPersonMessage(sender, formatedContent, storageUrls, thumb, messageTemplate.type)
+                    if (lineMessage) {
+                        messageRecord.sendCount += 1
+                        // console.log("lineMessage:", JSON.stringify(lineMessage, null, 4))
+                        pushMessagePromises.push(
+                            pushLineMessage(member.lineId, lineMessage)
+                                .then(() => {
+                                    messageRecord.successCount += 1
+                                    return createChatMessage(sender, member, messageTemplate.channel, formatedContent, storageUrls, thumb)
+                                })
+                                .catch(() => {
+                                    return resolve()
+                                })
+                        )
+                    }
+                    // }
+                }
             }
-        }
-        if (messageTemplate.channel == "SMS") {
-            const trackId = messageRecordService.getRecordDetailUUID(messageRecord.id)
-            let smsMessage = toSMSMessage(sender, formatedContent)
-           
+            if (messageTemplate.channel == "SMS") {
+                const trackId = messageRecordService.getRecordDetailUUID(messageRecord.id)
+                let smsMessage = toSMSMessage(sender, formatedContent)
 
-            if (receiver.mobilePhone && smsMessage) {
-                messageRecord.sendCount += 1
-                pushMessagePromises.push(
-                    pushSMSMessage(receiver.mobilePhone, smsMessage)
-                        .then(() => {
-                            messageRecord.successCount += 1
-                            return resolve()
-                        })
-                        .catch(() => {
-                            return resolve()
-                        })
-                )
+
+                if (member.mobilePhone && smsMessage) {
+                    messageRecord.sendCount += 1
+                    pushMessagePromises.push(
+                        pushSMSMessage(member.mobilePhone, smsMessage)
+                            .then(() => {
+                                messageRecord.successCount += 1
+                                return resolve()
+                            })
+                            .catch(() => {
+                                return resolve()
+                            })
+                    )
+                }
             }
-        }
 
-        if (messageTemplate.channel == "Email") {
-            const emailFiles = await getEmailFiles([])
-            const trackId = messageRecordService.getRecordDetailUUID(messageRecord.id)
-          
-            const emailmessage = await toEmailMessage(sender, formatedContent, messageRecord.id + trackId, emailFiles)
+            if (messageTemplate.channel == "Email") {
+                const emailFiles = await getEmailFiles([])
+                const trackId = messageRecordService.getRecordDetailUUID(messageRecord.id)
 
-            if (receiver.email && emailmessage) {
-                messageRecord.sendCount += 1
-                pushMessagePromises.push(
-                    pushEmailMessage(receiver.email, emailmessage)
-                        .then(() => {
-                            messageRecord.successCount += 1
-                            return resolve()
-                        })
-                        .catch(() => {
-                            return resolve()
-                        })
-                )
+                const emailmessage = await toEmailMessage(sender, formatedContent, messageRecord.id + trackId, emailFiles)
+
+                if (member.email && emailmessage) {
+                    messageRecord.sendCount += 1
+                    pushMessagePromises.push(
+                        pushEmailMessage(member.email, emailmessage)
+                            .then(() => {
+                                messageRecord.successCount += 1
+                                return resolve()
+                            })
+                            .catch(() => {
+                                return resolve()
+                            })
+                    )
+                }
             }
-        }
+        })
     }
     await Promise.all(pushMessagePromises).then(result => {
     }).catch(error => {
@@ -200,11 +202,12 @@ router.post("/replyMessage", async (req, res, next) => {
         await Promise.all(pushMessagePromises).then(result => {
             // console.log(JSON.stringify(result, null, 4))
             createChatMessage(staff, receiver, channel, message, storageUrls, "")
+            res.sendStatus(200)
         }).catch(error => {
             console.log(error)
             res.sendStatus(403)
         })
-        res.sendStatus(200)
+  
     } else {
         res.sendStatus(403)
     }
@@ -240,8 +243,8 @@ const createChatMessage = async (staff: Member, receiver: Member, channel: strin
     // if (!memberSnapShot.empty) {
 
     let userMessage: ChatMessage = {
-        id: receiver.id,
-        sender: receiver
+        id: receiver.id
+        
     }
     if (channel == "Line") {
         userMessage.id = receiver.lineId
@@ -267,8 +270,9 @@ const createChatMessage = async (staff: Member, receiver: Member, channel: strin
     // }
 }
 const getURLfromString = (message: string): string[] => {
-    const regex = new RegExp(/[-a-zA-Z0-9@:%_\+.~#?&//=]{2,256}\.[a-z]{2,4}\b(\/[-a-zA-Z0-9@:%_\+.~#?&//=]*)?/gi)
-    return regex.exec(message)
+    const urlWithParamRegex = new RegExp(/[-\w@:%\+.~#?&/=]{2,256}\.[a-z]{2,4}([\/?&/@:%\+.~#=][-\w]*)*/gi)
+    // const regex = new RegExp(/[-a-zA-Z0-9@:%_\+.~#?&//=]{2,256}\.[a-z]{2,4}\b(\/[-a-zA-Z0-9@:%_\+.~#?&//=]*)?/gi)
+    return urlWithParamRegex.exec(message)
 }
 const numberWithCommas = (x) => {
     return x.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",")
