@@ -39,7 +39,7 @@
     "morgan": "^1.9.1",
     "node-cache": "^4.2.0",
     "node-opencc": "^2.0.1",
-    "nodemailer": "^4.6.8",
+    "nodemailer": ">=6.4.16",
     "npm": "^6.4.0",
     "pinyin": "^2.8.3",
     "query-string": "^6.1.0",
