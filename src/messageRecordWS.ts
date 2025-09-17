@@ -11,7 +11,11 @@ router.get("/urlRedirect", (req, res) => {
     if (trackId != "system") {
         urlOpender(trackId)
     }
-    res.redirect(url)
+    if (isSafeRedirectTarget(url)) {
+        res.redirect(url)
+    } else {
+        res.redirect("/")
+    }
 })
 router.post("/memberTimer", (req, res) => {
     let member = req.body
@@ -81,6 +85,18 @@ const urlOpender = async (trackId: string) => {
     // }
 }
 
+// Allow only relative URLs as redirect targets
+function isSafeRedirectTarget(url: any): boolean {
+    // Only allow string, and only relative URLs (no protocol, no domain)
+    if (typeof url !== "string") return false;
+    // Disallow protocol-relative and fully qualified URLs
+    if (/^(\w+:)?\/\//.test(url)) return false;
+    // Disallow absolute file-system paths (optional)
+    // Optionally, allow only URLs starting with /
+    if (!url.startsWith("/")) return false;
+    // Optionally, add further path sanitization here
+    return true;
+}
 
 // router.get("/syncGAData", async (req, res) => {
 //     const records = await getMessageRecord()
