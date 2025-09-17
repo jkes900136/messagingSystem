@@ -1,4 +1,5 @@
 import { Router } from "express"
+import he from "he"
 import * as messageRecordService from "./services/messageRecordService"
 import * as memberService from "./services/memberService"
 import { pushMessage as pushLineMessage, toPersonMessage, toLineTextMessage } from "./services/lineService"
@@ -220,7 +221,7 @@ const formatContentByMQ = (message: string, data: any): string => {
         if (typeof tmp == "number")
             content = content.replace(regex, numberWithCommas(data[key]))
         else
-            content = content.replace(regex, tmp)
+            content = content.replace(regex, he.encode(String(tmp)))
     }
     return content
 }
@@ -232,7 +233,7 @@ const formatItemContentByMQ = (message: string, data: any): string => {
         if (typeof tmp == "number")
             content = content.replace(regex, numberWithCommas(data[key]))
         else
-            content = content.replace(regex, tmp)
+            content = content.replace(regex, he.encode(String(tmp)))
     }
     return content
 }
