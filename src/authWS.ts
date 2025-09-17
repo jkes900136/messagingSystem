@@ -6,9 +6,19 @@ import * as jws from "jws"
 import * as memberService from './services/memberService'
 import { jwtSecretKey, uriName, ServerUrlPrefix, lineLoginConfig, wechatAccount } from './config'
 import * as admin from 'firebase-admin';
+import rateLimit from 'express-rate-limit';
 
 
 const router = Router()
+
+// Rate limit: 100 requests per 15 min window per IP
+const limiter = rateLimit({
+    windowMs: 15 * 60 * 1000, // 15 minutes
+    max: 100,
+    standardHeaders: true,
+    legacyHeaders: false,
+    message: "Too many requests, please try again later."
+});
 
 function generateFirebaseToken(userId) {
     let firebaseUid = userId;
@@ -16,7 +26,7 @@ function generateFirebaseToken(userId) {
     return admin.auth().createCustomToken(firebaseUid);
 }
 
-router.post("/verifyLineUser", async (req, res) => {
+router.post("/verifyLineUser", limiter, async (req, res) => {
     const code = req.body.code
     const page = req.body.page
     console.log("----", code + " " + page)
@@ -68,7 +78,7 @@ router.post("/verifyLineUser", async (req, res) => {
     }
 })
 
-router.post("/verifyWechatUser", async (req, res) => {
+router.post("/verifyWechatUser", limiter, async (req, res) => {
     const code = req.body.code
 
     const wechatVerifyResult = await axios.get(`https://api.weixin.qq.com/sns/oauth2/access_token?appid=${wechatAccount.id}&secret=${wechatAccount.secret}&code=${code}&grant_type=authorization_code`)
@@ -96,7 +106,7 @@ router.post("/verifyWechatUser", async (req, res) => {
         res.status(403).send("verify failed")
     }
 })
-router.post("/verifyWebUser", async (req, res) => {
+router.post("/verifyWebUser", limiter, async (req, res) => {
     const code = req.body.code
     let firebaseToken = await generateFirebaseToken(code).catch(error => {
         console.log("generateFirebaseToken error:", error)
@@ -106,7 +116,7 @@ router.post("/verifyWebUser", async (req, res) => {
 
 })
 
-router.post("/verifyUser", (req, res) => {
+router.post("/verifyUser", limiter, (req, res) => {
     const accessToken = req.body.accessToken
     jwt.verify(accessToken, jwtSecretKey, (err, result) => {
         if (err) {
