@@ -1,4 +1,5 @@
 import { Router } from "express"
+import rateLimit from "express-rate-limit";
 import * as structureService from './services/structureService'
 import * as loginService from './services/loginService';
 import * as memberService from './services/memberService'
@@ -28,7 +29,15 @@ function escapeHTML(str: string): string {
 }
 
 const router = Router()
-router.post('/Binding', async function (req, res) {
+
+// set up rate limiter for /Binding route
+const bindingLimiter = rateLimit({
+    windowMs: 15 * 60 * 1000, // 15 minutes
+    max: 100, // limit each IP to 100 requests per windowMs
+    message: "Too many binding requests from this IP, please try again later."
+});
+
+router.post('/Binding', bindingLimiter, async function (req, res) {
     const applicationName = config.appName
     const lineId = req.body.lineId
     const data = req.body.data
