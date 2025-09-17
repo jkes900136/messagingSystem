@@ -13,6 +13,10 @@ router.get('/getFile', async function (req, res) {
     const auth = await driveService.authorize()
     const drive = google.drive({ version: 'v3', auth });
     const fileId = req.query.fileId;
+    // Validate fileId: must be a plausible Drive file ID (alphanum, _, -, length 20-100)
+    if (typeof fileId !== "string" || !/^[a-zA-Z0-9_-]{20,100}$/.test(fileId)) {
+        return res.status(400).send('Invalid fileId');
+    }
 
     driveService.getFileById(fileId).then(async doc => {
         if (doc.exists) {
