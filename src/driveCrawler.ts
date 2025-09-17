@@ -4,6 +4,15 @@ import * as googleDrive from "./services/driveService"
 var fs = require('fs');
 const router = Router()
 
+// Rate limiting middleware
+const rateLimit = require('express-rate-limit');
+const limiter = rateLimit({
+    windowMs: 15 * 60 * 1000, // 15 minutes
+    max: 100, // limit each IP to 100 requests per windowMs
+    standardHeaders: true, // Return rate limit info in the RateLimit-* headers
+    legacyHeaders: false, // Disable the X-RateLimit-* headers
+});
+router.use(limiter);
 router.post('/crawler', async function (req, res) {
     console.log("crawler");
     const auth = await googleDrive.authorize();
