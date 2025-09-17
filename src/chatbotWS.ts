@@ -14,6 +14,14 @@ import * as lineService from './services/lineService';
 const queryString = require('query-string');
 let path = require("path");
 
+// Rate limiter for wechatRedir route - stricter limits due to file system access
+const wechatRedirLimiter = rateLimit({
+    windowMs: 15 * 60 * 1000, // 15 minutes
+    max: 20, // limit each IP to 20 requests per windowMs (stricter than other routes)
+    standardHeaders: true,
+    legacyHeaders: false,
+    message: "Too many file access requests from this IP, please try again later."
+});
 
 const router = Router()
 router.post('/lineWebhook', (req, res) => {
