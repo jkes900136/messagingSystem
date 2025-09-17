@@ -11,6 +11,22 @@ import * as admin from 'firebase-admin';
 import { IssueOrganization, GroupOrganization, Group, MemberOrganization, Member } from './model';
 const uuidv4 = require('uuid').v4;
 
+// Utility to escape HTML meta-characters (minimal version)
+function escapeHTML(str: string): string {
+    if (typeof str !== 'string') return str;
+    return str.replace(/[&<>"'`]/g, function (char) {
+        const map: { [char: string]: string } = {
+            '&': '&amp;',
+            '<': '&lt;',
+            '>': '&gt;',
+            '"': '&quot;',
+            "'": '&#39;',
+            '`': '&#x60;'
+        };
+        return map[char];
+    });
+}
+
 const router = Router()
 router.post('/Binding', async function (req, res) {
     const applicationName = config.appName
@@ -34,7 +50,7 @@ router.post('/Binding', async function (req, res) {
                 break
             case "login":
                 result = await login(lineId, data, applicationName).catch(err => {
-                    res.status(403).send(err)
+                    res.status(403).json({ error: escapeHTML(err.toString()) })
                 })
                 console.log("result", result)
                 res.send(result)
@@ -42,7 +58,7 @@ router.post('/Binding', async function (req, res) {
             case "groupBinding":
                 result = await groupBinding(lineId, data, applicationName).then(() => {
                 }).catch(err => {
-                    res.status(403).send(err)
+                    res.status(403).json({ error: escapeHTML(err.toString()) })
                 })
                 console.log("result", result)
                 res.send(result)
