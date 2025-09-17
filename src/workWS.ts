@@ -1,12 +1,21 @@
 import { Router } from "express"
 import { v4 as uuidv4 } from "uuid"
 import * as driveService from "./services/driveService"
+import rateLimit from "express-rate-limit";
 import * as receiverService from "./services/receiverService"
 import * as workService from "./services/workService"
 import { Work, Task, Item, Flow, WorkUpload, MemberOrganization } from "./model"
 import * as config from './config';
 
 const router = Router()
+
+// Set up rate limiter: max 100 requests per 15 minutes per IP
+const limiter = rateLimit({
+    windowMs: 15 * 60 * 1000, // 15 minutes
+    max: 100,
+});
+// Apply rate limiter to all routes in this router
+router.use(limiter);
 
 router.post("/createWorks", async (req, res) => {
     const workUploads = req.body as WorkUpload[]
