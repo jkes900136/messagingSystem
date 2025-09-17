@@ -44,7 +44,8 @@
     "uuid": "^9.0.0",
     "wechat": "^2.1.0",
     "xlsx": "^0.18.5",
-    "@google-cloud/dialogflow": "^7.2.0"
+    "@google-cloud/dialogflow": "^7.2.0",
+    "express-rate-limit": "^8.1.0"
   },
   "devDependencies": {
     "@types/gapi.client.drive": "^3.0.1",
