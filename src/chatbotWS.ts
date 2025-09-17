@@ -52,23 +52,28 @@ router.post('/lineWebhook', (req, res) => {
                                 } else {
                                     fileName = event.message.id
                                 }
-                                const result = await axios.get(`https://api.line.me/v2/bot/message/${event.message.id}/content`, {
-                                    responseType: "stream",
-                                    headers: {
-                                        "Authorization": "Bearer " + LINE.channelAccessToken,
-                                    }
-                                }).catch(error => {
-                                    if (error.hasOwnProperty("response")) {
-                                        if (error.response.hasOwnProperty("status")) {
-                                            console.log("Get content failed with status code:", error.response.status + error.response.statusText)
-                                        } else {
-                                            console.log("Get content failed with no status code")
+                                // SSRF mitigation: validate message id
+                                if (/^[a-zA-Z0-9_-]+$/.test(event.message.id)) {
+                                    const result = await axios.get(`https://api.line.me/v2/bot/message/${event.message.id}/content`, {
+                                        responseType: "stream",
+                                        headers: {
+                                            "Authorization": "Bearer " + LINE.channelAccessToken,
                                         }
-                                    } else {
-                                        console.log("Get content failed with no response")
-                                    }
-                                    return null
-                                })
+                                    }).catch(error => {
+                                        if (error.hasOwnProperty("response")) {
+                                            if (error.response.hasOwnProperty("status")) {
+                                                console.log("Get content failed with status code:", error.response.status + error.response.statusText)
+                                            } else {
+                                                console.log("Get content failed with no status code")
+                                            }
+                                        } else {
+                                            console.log("Get content failed with no response")
+                                        }
+                                        return null
+                                    })
+                                } else {
+                                    console.log("Invalid message id for LINE content fetch; possible SSRF attempt:", event.message.id);
+                                }
                                 if (result != null) {
                                     const stream = result.data as Stream
                                     console.log(result.headers['content-type']);
