@@ -5,14 +5,32 @@ import { RecordDetail, MessageRecord } from "./model"
 
 const router = Router()
 
+// Whitelist of explicitly allowed relative targets
+const ALLOWED_REDIRECT_TARGETS = [
+    "/",               // homepage
+    "/dashboard",
+    "/profile",
+    // Add more allowed relative routes as needed
+];
+
+// Helper: returns the safe redirect target if allowed
+function getAllowedRedirectTarget(url: any): string | null {
+    if (typeof url !== "string") return null;
+    if (ALLOWED_REDIRECT_TARGETS.includes(url)) {
+        return url;
+    }
+    return null;
+}
+
 router.get("/urlRedirect", (req, res) => {
-    const url = req.query.url
-    const trackId = req.query.trackId
+    const url = req.query.url;
+    const trackId = req.query.trackId;
     if (trackId != "system") {
         urlOpender(trackId)
     }
-    if (isSafeRedirectTarget(url)) {
-        res.redirect(url)
+    const safeTarget = getAllowedRedirectTarget(url);
+    if (safeTarget) {
+        res.redirect(safeTarget)
     } else {
         res.redirect("/")
     }
@@ -85,18 +103,7 @@ const urlOpender = async (trackId: string) => {
     // }
 }
 
-// Allow only relative URLs as redirect targets
-function isSafeRedirectTarget(url: any): boolean {
-    // Only allow string, and only relative URLs (no protocol, no domain)
-    if (typeof url !== "string") return false;
-    // Disallow protocol-relative and fully qualified URLs
-    if (/^(\w+:)?\/\//.test(url)) return false;
-    // Disallow absolute file-system paths (optional)
-    // Optionally, allow only URLs starting with /
-    if (!url.startsWith("/")) return false;
-    // Optionally, add further path sanitization here
-    return true;
-}
+// The allowlist-based check is now enforced above with getAllowedRedirectTarget.
 
 // router.get("/syncGAData", async (req, res) => {
 //     const records = await getMessageRecord()
