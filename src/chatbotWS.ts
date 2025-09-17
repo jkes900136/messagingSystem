@@ -159,7 +159,7 @@ router.use('/wechatWebhook', wechat(wechatAccount.callbackToken, function (req, 
     let t1, t2, t3;
     t1 = new Date();
     if (req.method.toLowerCase() === "get") {
-        const shasum = createHash("sha1")
+        const shasum = createHash("sha256")
         shasum.update([wechatAccount.callbackToken, req.query.timestamp, req.query.nonce].sort().join(""))
         const signature = shasum.digest("hex")
         if (signature !== req.query.signature)
