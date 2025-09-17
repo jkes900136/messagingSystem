@@ -1,4 +1,5 @@
 import { createTransport } from "nodemailer"
+import he from "he"
 import Axios from "axios"
 import * as driveService from './driveService'
 import { appName, emailConfig, backendUrl } from "../config"
@@ -19,7 +20,7 @@ export const pushMessage = (email: string, options: { subject: string, message: 
             from: appName + `<${emailConfig.user}>`,
             to: email,
             subject: options.subject,
-            html: options.message,
+            html: he.encode(options.message),
             attachments: options.files
         }
 
