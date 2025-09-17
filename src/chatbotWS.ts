@@ -5,6 +5,7 @@ import { Stream } from 'stream';
 import * as fs from 'fs'
 import axios from "axios"
 import * as wechat from 'wechat'
+import rateLimit from "express-rate-limit";
 import { createHash } from "crypto"
 import * as mime from "mime"
 import { messageDispatcher, postbackDispatcher } from './authorizationSubscriber'
@@ -12,6 +13,7 @@ import { getMemberByAnyId, setMember, deleteFirebaseToken } from './services/mem
 import * as lineService from './services/lineService';
 const queryString = require('query-string');
 let path = require("path");
+
 
 const router = Router()
 router.post('/lineWebhook', (req, res) => {
@@ -206,7 +208,7 @@ router.use('/wechatWebhook', wechat(wechatAccount.callbackToken, function (req, 
         });
 })); // end of wechatWebhook
 
-router.use('/wechatRedir', async function (req, res) {
+router.use('/wechatRedir', wechatRedirLimiter, async function (req, res) {
     if (req.hasOwnProperty("body")) {
         console.log('Has body wechatRedir.html:', req.body)
     } else {
