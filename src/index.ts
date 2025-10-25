@@ -17,7 +17,7 @@ const settings = { timestampsInSnapshots: true };
 admin.firestore().settings(settings);
 const app = Express()
 
-app.use(Cors({ origin: true }));
+app.use(Cors({ origin: false }));
 app.use(Logger("dev"))
 app.use(Express.json({ limit: '100mb' }));
 

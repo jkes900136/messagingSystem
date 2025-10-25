@@ -44,10 +44,8 @@
     "query-string": "^8.1.0",
     "querystring": "^0.2.1",
     "time-checker": "^0.1.2",
-    "uuid": "^9.0.0",
-    "wechat": "^2.1.0",
-    "xlsx": "https://cdn.sheetjs.com/xlsx-latest/xlsx-latest.tgz",
-    "xml2js": "^0.5.0"
+    "uuid": "^9.0.0",   
+    "xlsx": "https://cdn.sheetjs.com/xlsx-latest/xlsx-latest.tgz"    
   },
   "devDependencies": {
     "@types/gapi.client.drive": "^3.0.1",
@@ -56,11 +54,6 @@
     "@typescript-eslint/parser": "^6.7.0",
     "eslint": "^8.50.0",
     "typescript": "^5.3.3"
-  },
-  "overrides": {
-    "wechat": {
-      "xml2js": "^0.5.0"
-    }
-  },
+  },  
   "private": true
 }
