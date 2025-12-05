@@ -32,7 +32,7 @@
     "googleapis": "^133.0.0",
     "he": "^1.2.0",
     "jsonwebtoken": "^9.0.2",
-    "jws": "^3.2.2",
+    "jws": "^3.2.3",
     "mime": "^3.0.0",
     "moment": "^2.29.4",
     "moment-timezone": "^0.5.43",
