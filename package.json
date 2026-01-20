@@ -40,7 +40,7 @@
     "node-cache": "^5.1.2",
     "node-opencc": "^2.0.1",
     "nodemailer": "^7.0.11",
-    "pinyin": "^2.8.3",
+    "pinyin": "^4.0.0",
     "query-string": "^8.1.0",
     "querystring": "^0.2.1",
     "time-checker": "^0.1.2",
