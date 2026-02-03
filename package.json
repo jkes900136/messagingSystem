@@ -26,8 +26,8 @@
     "cors": "^2.8.5",
     "express": "^4.22.1",
     "express-rate-limit": "^8.1.0",
-    "firebase-admin": "^13.5.0",
-    "firebase-functions": "^6.4.0",
+    "firebase-admin": "^13.6.0",
+    "firebase-functions": "^7.0.5",
     "google-auth-library": "^9.0.0",
     "googleapis": "^133.0.0",
     "he": "^1.2.0",
@@ -44,8 +44,8 @@
     "query-string": "^8.1.0",
     "querystring": "^0.2.1",
     "time-checker": "^0.1.2",
-    "uuid": "^9.0.0",   
-    "xlsx": "https://cdn.sheetjs.com/xlsx-latest/xlsx-latest.tgz"    
+    "uuid": "^9.0.0",
+    "xlsx": "https://cdn.sheetjs.com/xlsx-latest/xlsx-latest.tgz"
   },
   "devDependencies": {
     "@types/gapi.client.drive": "^3.0.1",
@@ -54,6 +54,6 @@
     "@typescript-eslint/parser": "^6.7.0",
     "eslint": "^8.50.0",
     "typescript": "^5.3.3"
-  },  
+  },
   "private": true
 }
