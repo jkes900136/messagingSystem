@@ -14,7 +14,7 @@
     "@google-cloud/dialogflow": "^7.5.0",
     "@google-cloud/pubsub": "^5.3.0",
     "@google-cloud/storage": "^7.19.0",
-    "@line/bot-sdk": "^7.5.0",
+    "@line/bot-sdk": "^10.6.0",
     "@types/jws": "^3.1.0",
     "@types/mime-types": "^2.1.0",
     "@types/moment-timezone": "^0.5.8",
