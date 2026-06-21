@@ -40,12 +40,12 @@
     "morgan": "^1.10.0",
     "node-cache": "^5.1.2",
     "node-opencc": "^2.0.1",
-    "nodemailer": "^8.0.9",
+    "nodemailer": "^9.0.1",
     "pinyin": "^4.0.0",
     "query-string": "^8.1.0",
     "querystring": "^0.2.1",
     "time-checker": "^0.1.2",
-    "uuid": "^14.0.0",
+    "uuid": "^14.0.1",
     "xlsx": "https://cdn.sheetjs.com/xlsx-latest/xlsx-latest.tgz"
   },
   "devDependencies": {
